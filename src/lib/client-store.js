@@ -18,7 +18,7 @@ const useClientStore = create((set, get) => ({
   getSupportedBanks: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await axios.get('/clients/banks')
+      const response = await axios.get('/banks')
       set({ supportedBanks: response.data.banks, isLoading: false })
       return response.data.banks
     } catch (error) {
