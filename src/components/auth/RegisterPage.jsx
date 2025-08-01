@@ -28,6 +28,8 @@ const registerSchema = z.object({
 const RegisterPage = () => {
   const navigate = useNavigate()
   const { register: registerUser, isLoading, error } = useAuthStore()
+  const [submitError, setSubmitError] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const {
     register,
@@ -38,12 +40,33 @@ const RegisterPage = () => {
   })
 
   const onSubmit = async (data) => {
-    const { confirmPassword, ...userData } = data
-    const result = await registerUser(userData)
-    if (result.success) {
-      navigate('/dashboard')
+    setIsSubmitting(true)
+    setSubmitError(null)
+    
+    try {
+      console.log('Submitting registration form with data:', data)
+      const { confirmPassword, ...userData } = data
+      
+      const result = await registerUser(userData)
+      console.log('Registration result:', result)
+      
+      if (result.success) {
+        console.log('Registration successful, navigating to dashboard')
+        navigate('/dashboard')
+      } else {
+        console.error('Registration failed:', result.error)
+        setSubmitError(result.error || 'Error en el registro')
+      }
+    } catch (error) {
+      console.error('Unexpected error during registration:', error)
+      setSubmitError('Error inesperado durante el registro')
+    } finally {
+      setIsSubmitting(false)
     }
   }
+
+  // Use submitError first, then fallback to store error
+  const displayError = submitError || error
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 p-4">
@@ -60,15 +83,15 @@ const RegisterPage = () => {
             Regístrate como promotor para comenzar
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
+            {displayError && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{displayError}</AlertDescription>
               </Alert>
             )}
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first_name">Nombre</Label>
@@ -85,7 +108,7 @@ const RegisterPage = () => {
                   <p className="text-xs text-red-600">{errors.first_name.message}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="last_name">Apellido</Label>
                 <div className="relative">
@@ -102,7 +125,7 @@ const RegisterPage = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="phone_number">Teléfono</Label>
               <div className="relative">
@@ -115,10 +138,10 @@ const RegisterPage = () => {
                 />
               </div>
               {errors.phone_number && (
-                <p className="text-sm text-red-600">{errors.phone_number.message}</p>
+                <p className="text-xs text-red-600">{errors.phone_number.message}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Correo electrónico</Label>
               <div className="relative">
@@ -132,10 +155,10 @@ const RegisterPage = () => {
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
+                <p className="text-xs text-red-600">{errors.email.message}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <div className="relative">
@@ -149,10 +172,10 @@ const RegisterPage = () => {
                 />
               </div>
               {errors.password && (
-                <p className="text-sm text-red-600">{errors.password.message}</p>
+                <p className="text-xs text-red-600">{errors.password.message}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
               <div className="relative">
@@ -166,16 +189,16 @@ const RegisterPage = () => {
                 />
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+                <p className="text-xs text-red-600">{errors.confirmPassword.message}</p>
               )}
             </div>
-            
+
             <Button 
               type="submit" 
               className="w-full bg-green-600 hover:bg-green-700"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
             >
-              {isLoading ? (
+              {(isLoading || isSubmitting) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creando cuenta...
@@ -185,14 +208,11 @@ const RegisterPage = () => {
               )}
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ¿Ya tienes una cuenta?{' '}
-              <Link 
-                to="/login" 
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
+              <Link to="/login" className="text-blue-600 hover:underline">
                 Inicia sesión
               </Link>
             </p>
